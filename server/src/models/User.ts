@@ -2,9 +2,9 @@ import { Schema, model, type Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Import schema from Book.js
-import bookSchema from './Book.js';
-import type { BookDocument } from './Book.js';
+// Import schema from Book.ts (no .js extension)
+import bookSchema from './Book';
+import type { BookDocument } from './Book';
 
 export interface UserDocument extends Document {
   id: string;
@@ -34,7 +34,7 @@ const userSchema = new Schema<UserDocument>(
       type: String,
       required: true,
     },
-    // Set savedBooks to be an array of data that adheres to the bookSchema
+    // Use Book schema array
     savedBooks: [bookSchema],
   },
   {
@@ -44,7 +44,7 @@ const userSchema = new Schema<UserDocument>(
   }
 );
 
-// Hash user password before saving
+// Hash password before saving
 userSchema.pre<UserDocument>('save', async function (next) {
   if (this.isNew || this.isModified('password')) {
     const saltRounds = 10;
@@ -53,18 +53,18 @@ userSchema.pre<UserDocument>('save', async function (next) {
   next();
 });
 
-// Custom method to compare and validate password for logging in
+// Compare and validate password
 userSchema.methods.validatePassword = async function (password: string) {
   return await bcrypt.compare(password, this.password);
 };
 
-// Method to generate JWT token with a fallback secret
+// Generate JWT
 userSchema.methods.generateAuthToken = function () {
-  const secret = process.env.JWT_SECRET || 'default_secret_key'; // Fallback value
+  const secret = process.env.JWT_SECRET || 'default_secret_key';
   return jwt.sign({ id: this._id }, secret, { expiresIn: '1h' });
 };
 
-// Virtual property for book count
+// Virtual for book count
 userSchema.virtual('bookCount').get(function () {
   return this.savedBooks.length;
 });

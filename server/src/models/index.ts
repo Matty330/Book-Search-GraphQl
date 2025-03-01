@@ -1,3 +1,10 @@
-import User from './User';
+import { Router } from 'express';
 
-export default { User };
+// Removed import.meta.url usage and path import
+// because CommonJS build disallows import.meta.url.
+
+const router = Router();
+
+// Define any route logic here, if needed
+
+export default router;
