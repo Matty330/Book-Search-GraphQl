@@ -1,23 +1,47 @@
-import express from 'express';
-const router = express.Router();
-import {
-  createUser,
-  getSingleUser,
-  saveBook,
-  deleteBook,
-  login,
-} from '../../controllers/user-controller.js';
+import { Router } from 'express';
+import { createUser, login, getSingleUser, saveBook, deleteBook } from '../../controllers/user-controller';
+import { authenticateToken } from '../../services/auth';
 
-// import middleware
-import { authenticateToken } from '../../services/auth.js';
+const router = Router();
 
-// put authMiddleware anywhere we need to send a token for verification of user
-router.route('/').post(createUser).put(authenticateToken, saveBook);
+router.post('/', async (req, res, next) => {
+  try {
+    await createUser(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
 
-router.route('/login').post(login);
+router.put('/', authenticateToken, async (req, res, next) => {
+  try {
+    await saveBook(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
 
-router.route('/me').get(authenticateToken, getSingleUser);
+router.post('/login', async (req, res, next) => {
+  try {
+    await login(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
 
-router.route('/books/:bookId').delete(authenticateToken, deleteBook);
+router.get('/me', authenticateToken, async (req, res, next) => {
+  try {
+    await getSingleUser(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/books/:bookId', authenticateToken, async (req, res, next) => {
+  try {
+    await deleteBook(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default router;

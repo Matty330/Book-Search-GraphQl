@@ -36,7 +36,8 @@ export const login = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Can't find this user" });
   }
 
-  const correctPw = await user.isCorrectPassword(req.body.password);
+  const correctPw = await user.validatePassword(req.body.password);
+
 
   if (!correctPw) {
     return res.status(400).json({ message: 'Wrong password!' });
