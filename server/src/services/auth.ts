@@ -1,43 +1,102 @@
-import type { Request, Response, NextFunction } from 'express';
+// server/src/services/auth.ts
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
+import { Request } from 'express';
 
-dotenv.config();
+// Set token secret and expiration
+const secret = process.env.JWT_SECRET || 'mysecretsshhhhh';
+const expiration = '2h';
 
-interface JwtPayload {
+export interface TokenUser {
   _id: string;
   username: string;
   email: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key';
+export interface MyContext {
+  user?: TokenUser;
+}
 
-/**
- * NOTE:
- * We explicitly ensure every branch ends in a 'return'.
- * This fixes the “Not all code paths return a value” error.
- */
-export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
+// Function for Apollo Server authentication
+export function authMiddleware({ req }: { req: Request }): MyContext {
+  // Get token from header
+  let token = req.headers.authorization || '';
+  
+  console.log('Authorization header:', token); // Debugging
+  
+  // Format as ["Bearer", "<tokenvalue>"]
+  if (token && token.startsWith('Bearer ')) {
+    token = token.slice(7, token.length).trim();
+  }
+  
+  console.log('Token after slicing:', token ? 'Token exists' : 'No token'); // Debugging
+
+  if (!token) {
+    return {};
   }
 
-  const token = authHeader.split(' ')[1];
-
-  jwt.verify(token, JWT_SECRET, (err, decoded) => {
-    if (err || !decoded) {
-      res.status(403).json({ message: 'Forbidden' });
-      return;
+  // Verify token and get user data from it
+  try {
+    console.log('About to verify token...');
+    
+    // Try parsing the token first to make sure it's valid JSON
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
+      console.log('Parsed token payload:', payload);
+    } catch (parseErr) {
+      console.log('Error parsing token:', parseErr);
     }
+    
+    const decoded = jwt.verify(token, secret);
+    console.log('Decoded token:', decoded); // Debugging
+    
+    // Check if decoded has the expected structure
+    if (typeof decoded === 'object' && decoded !== null && 'data' in decoded) {
+      const { data } = decoded as { data: TokenUser };
+      console.log('User data from token:', data); // Debugging
+      return { user: data };
+    } else {
+      console.log('Decoded token does not have expected structure:', decoded); // Debugging
+      return {};
+    }
+  } catch (err) {
+    console.log('Error verifying token:', err); // Debugging
+    return {};
+  }
+}
 
-    req.user = decoded as JwtPayload;
+// Function for Express routes authentication (used in REST API)
+export function authenticateToken(req: Request, res: any, next: () => void): void {
+  // Get token from header
+  let token = req.headers.authorization || '';
+
+  // Format as ["Bearer", "<tokenvalue>"]
+  if (token && token.startsWith('Bearer ')) {
+    token = token.slice(7, token.length).trim();
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: 'You need to be logged in!' });
+  }
+
+  // Verify token
+  try {
+    const { data } = jwt.verify(token, secret) as { data: TokenUser };
+    req.user = data;
     next();
-    return;
-  });
-};
+  } catch (err) {
+    console.error('Authentication error:', err);
+    res.status(401).json({ message: 'Invalid token' });
+  }
+}
 
-export const signToken = (_id: string, username: string, email: string): string => {
-  return jwt.sign({ _id, username, email }, JWT_SECRET, { expiresIn: '1h' });
-};
+export function signToken(user: any): string {
+  const payload = {
+    _id: user._id,
+    username: user.username,
+    email: user.email
+  };
+  
+  return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
+}

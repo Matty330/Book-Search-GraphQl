@@ -1,7 +1,7 @@
+// server/src/controllers/user-controller.ts
 import type { Request, Response } from 'express';
 import User from '../models/User.js';
 import { signToken } from '../services/auth.js';
-import { Types } from 'mongoose'; // Import for ObjectId handling
 
 // Get a single user by either their ID or their username
 export const getSingleUser = async (req: Request, res: Response) => {
@@ -29,10 +29,7 @@ export const createUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Something went wrong!' });
     }
 
-    // Ensure _id is converted to a string
-    const userId = user._id instanceof Types.ObjectId ? user._id.toHexString() : String(user._id);
-
-    const token = signToken(userId, user.username, user.email);
+    const token = signToken(user);
     return res.json({ token, user });
   } catch (error) {
     return res.status(500).json({ message: 'Internal Server Error', error });
@@ -54,10 +51,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Wrong password!' });
     }
 
-    // Ensure _id is converted to a string
-    const userId = user._id instanceof Types.ObjectId ? user._id.toHexString() : String(user._id);
-
-    const token = signToken(userId, user.username, user.email);
+    const token = signToken(user);
     return res.json({ token, user });
   } catch (error) {
     return res.status(500).json({ message: 'Internal Server Error', error });
