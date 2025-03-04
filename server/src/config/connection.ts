@@ -8,6 +8,8 @@ dotenv.config();
 // Set the MongoDB connection string
 const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/googlebooks';
 
+console.log('Connecting to MongoDB:', mongoURI.substring(0, mongoURI.indexOf('://') + 6) + '***');
+
 // Connect to MongoDB with updated options
 mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB connection established successfully'))

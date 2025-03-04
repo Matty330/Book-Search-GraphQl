@@ -6,6 +6,10 @@ import fs from 'fs';
 import db from './config/connection';
 import { typeDefs, resolvers } from './schemas';
 import { authMiddleware } from './services/auth';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 async function startServer() {
   const app = express();
@@ -27,32 +31,17 @@ async function startServer() {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  // Debug info for file paths
+  // Debug paths
   console.log('Current directory:', process.cwd());
   console.log('__dirname:', __dirname);
 
-  // Serve static assets if in production
-  if (process.env.NODE_ENV === 'production') {
-    // Try different paths that might work in the Render environment
-    const clientPath = path.join(process.cwd(), 'client/build');
-    const altClientPath = path.join(process.cwd(), '../client/build');
-    
-    console.log('Checking client path:', clientPath);
-    console.log('Checking alt client path:', altClientPath);
-    
-    // Check if these paths exist
-    console.log('Client path exists:', fs.existsSync(clientPath));
-    console.log('Alt client path exists:', fs.existsSync(altClientPath));
-    
-    // Use the path that exists
-    const buildPath = fs.existsSync(clientPath) ? clientPath : altClientPath;
-    
-    app.use(express.static(buildPath));
-    
-    app.get('*', (_req, res) => {
-      res.sendFile(path.join(buildPath, 'index.html'));
-    });
-  }
+  // Add a test endpoint
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'API is working!' });
+  });
+
+  // Only serve GraphQL API in production for now
+  // Note: We're not serving static files until we fix the client build path issue
 
   db.once('open', () => {
     app.listen(PORT, () => {

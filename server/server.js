@@ -1,2 +1,3 @@
-// This file simply points to the compiled TypeScript code
-require('./dist/server.js');
+// server/server.js
+// This file redirects to the compiled TypeScript code
+require('./dist/server');
