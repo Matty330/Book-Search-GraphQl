@@ -1,6 +1,7 @@
 // server/src/server.ts
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
+import path from 'path';
 import db from './config/connection';
 import { typeDefs, resolvers } from './schemas';
 import { authMiddleware } from './services/auth';
@@ -29,9 +30,13 @@ async function startServer() {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  // Add a health check route
-  app.get('/api/health', (_req, res) => {
-    res.json({ status: 'API is working!' });
+  // Serve static assets
+  // Look for client files in the dist/client directory where we copied them
+  app.use(express.static(path.join(__dirname, 'client')));
+
+  // Wildcard route to serve the React app
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'index.html'));
   });
 
   db.once('open', () => {
