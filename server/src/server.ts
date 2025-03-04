@@ -1,8 +1,6 @@
 // server/src/server.ts
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
-import path from 'path';
-import fs from 'fs';
 import db from './config/connection';
 import { typeDefs, resolvers } from './schemas';
 import { authMiddleware } from './services/auth';
@@ -25,23 +23,16 @@ async function startServer() {
   await server.start();
   
   // Apply Express middleware
-  // @ts-ignore - Type mismatch in apollo-server-express types
+  // @ts-ignore
   server.applyMiddleware({ app });
 
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  // Debug paths
-  console.log('Current directory:', process.cwd());
-  console.log('__dirname:', __dirname);
-
-  // Add a test endpoint
+  // Add a health check route
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'API is working!' });
   });
-
-  // Only serve GraphQL API in production for now
-  // Note: We're not serving static files until we fix the client build path issue
 
   db.once('open', () => {
     app.listen(PORT, () => {
