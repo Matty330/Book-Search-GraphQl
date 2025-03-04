@@ -1,3 +1,6 @@
 // server/server.js
-// This file redirects to the compiled TypeScript code
-require('./dist/server');
+try {
+    require('./dist/server.js');
+    } catch (err) {
+    console.error('Error loading server:', err);
+    }
