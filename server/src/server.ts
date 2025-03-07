@@ -25,39 +25,50 @@ async function startServer() {
   await server.start();
   
   // Apply Express middleware
-  // @ts-ignore
   server.applyMiddleware({ app });
 
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
+  // Print the current directory for debugging
+  console.log('Current working directory:', process.cwd());
+  console.log('__dirname:', __dirname);
+
   // Try multiple possible locations for client files
   const possibleClientPaths = [
-    path.join(__dirname, 'client'),
+    path.join(__dirname, '../../client/build'),
     path.join(__dirname, '../client/build'),
-    path.join(process.cwd(), 'client/build')
+    path.join(process.cwd(), 'client/build'),
+    path.join(process.cwd(), '../client/build')
   ];
 
   // Try each path until we find one that exists
   let clientPath = null;
   for (const testPath of possibleClientPaths) {
     try {
+      console.log('Checking path:', testPath);
       const exists = fs.existsSync(testPath);
+      console.log('Path exists:', exists);
       if (exists) {
         clientPath = testPath;
         console.log('Found client files at:', clientPath);
         break;
       }
     } catch (err) {
+      console.error('Error checking path:', testPath, err);
       // Continue to next path
     }
   }
 
   // If we found a valid client path, serve those files
   if (clientPath) {
+    console.log('Serving static files from:', clientPath);
     app.use(express.static(clientPath));
+    
+    // This must be defined after the static middleware
     app.get('*', (_req, res) => {
-      res.sendFile(path.join(clientPath as string, 'index.html'));
+      console.log('Sending index.html from:', path.join(clientPath, 'index.html'));
+      res.sendFile(path.join(clientPath, 'index.html'));
     });
   } else {
     console.log('No client build found, serving API only');
@@ -78,6 +89,10 @@ async function startServer() {
             <h1>Book Search API</h1>
             <p>The GraphQL API is running at <a class="link" href="/graphql">/graphql</a></p>
             <p>Client build not found. Please check your deployment configuration.</p>
+            <p>Searched paths:</p>
+            <ul>
+              ${possibleClientPaths.map(p => `<li>${p}</li>`).join('')}
+            </ul>
           </body>
         </html>
       `);
@@ -88,6 +103,7 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`API server running on port ${PORT}!`);
       console.log(`Use GraphQL at http://localhost:${PORT}${server.graphqlPath}`);
+      console.log(`Server environment: ${process.env.NODE_ENV}`);
     });
   });
 }
