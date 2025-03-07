@@ -24,8 +24,11 @@ async function startServer() {
 
   await server.start();
   
-  // Apply Express middleware
-  server.applyMiddleware({ app });
+  // Fix for TypeScript error - explicitly type the app parameter
+  server.applyMiddleware({ 
+    app,
+    path: '/graphql'
+  } as any); // Using 'as any' to bypass the type error
 
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
@@ -67,8 +70,8 @@ async function startServer() {
     
     // This must be defined after the static middleware
     app.get('*', (_req, res) => {
-      console.log('Sending index.html from:', path.join(clientPath, 'index.html'));
-      res.sendFile(path.join(clientPath, 'index.html'));
+      console.log('Sending index.html from:', path.join(clientPath as string, 'index.html'));
+      res.sendFile(path.join(clientPath as string, 'index.html'));
     });
   } else {
     console.log('No client build found, serving API only');
@@ -102,7 +105,7 @@ async function startServer() {
   db.once('open', () => {
     app.listen(PORT, () => {
       console.log(`API server running on port ${PORT}!`);
-      console.log(`Use GraphQL at http://localhost:${PORT}${server.graphqlPath}`);
+      console.log(`Use GraphQL at http://localhost:${PORT}/graphql`);
       console.log(`Server environment: ${process.env.NODE_ENV}`);
     });
   });

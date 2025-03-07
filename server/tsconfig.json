@@ -3,9 +3,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "module": "NodeNext",         // Add this
-    "moduleResolution": "NodeNext", // Add this
-    "esModuleInterop": true       // Add this
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "target": "ES2020",
+    "skipLibCheck": true,
+    "exactOptionalPropertyTypes": false,
+    "strict": false
   },
   "include": ["src"],
   "typeRoots": [
